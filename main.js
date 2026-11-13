@@ -1,71 +1,210 @@
-const startBtn = document.querySelector("[data-btn='start']")
-const resetBtn = document.querySelector("[data-btn='reset']")
+const TOTAL_ATTEMPTS = 3;      
+const FLIP_TIME = 250;         
+const MAX_NAME_TRIES = 3;      
+const DEFAULT_NAME = 'Гравець';
 
-const username = document.querySelector("[data-user='username']");
+const CARDS = [
+  { rank: '6',  title: '6',      value: 6 },
+  { rank: '7',  title: '7',      value: 7 },
+  { rank: '8',  title: '8',      value: 8 },
+  { rank: '9',  title: '9',      value: 9 },
+  { rank: '10', title: '10',     value: 10 },
+  { rank: 'В',  title: 'Валет',  value: 2 },
+  { rank: 'Д',  title: 'Дама',   value: 3 },
+  { rank: 'К',  title: 'Король', value: 4 },
+  { rank: 'Т',  title: 'Туз',    value: 11 }
+];
 
-const userScoreField = document.querySelector("[data-score='user']");
-const userNumField = document.querySelector("[data-num='user']");
-const compScoreField = document.querySelector("[data-score='comp']");
-const compNumField = document.querySelector("[data-num='comp']");
+const SUITS = [
+  { symbol: '♠', color: '#111111' },
+  { symbol: '♣', color: '#111111' },
+  { symbol: '♥', color: '#d32f2f' },
+  { symbol: '♦', color: '#d32f2f' }
+];
 
-const msgFIeld = document.querySelector("[data-msg]");
+const COLORS = {
+  score: '#00b0f0',
+  win:   '#34c759',
+  lose:  '#ff6b6b',
+  draw:  '#ffb020'
+};
 
-let resUsername = prompt("Enter name");
-
-while (resUsername === null || resUsername.trim() === '') {
-    resUsername = prompt('Please, enter valid name'); 
+const getPlayerUI = (pr) => {
+  const card = document.getElementById(pr + '-card');
+  return {
+    block:   document.getElementById(pr + '-block'),
+    name:    document.getElementById(pr + '-name'),
+    score:   document.getElementById(pr + '-score'),
+    caption: document.getElementById(pr + '-caption'),
+    card:    card,
+    ranks:     card.querySelectorAll('.card__rank'),
+    miniSuits: card.querySelectorAll('.card__mini-suit'),
+    bigSuit:   card.querySelector('.card__suit')
+  };
 }
 
-username.textContent = resUsername.trim();
+const ui = {
+  user:     getPlayerUI('user'),
+  computer: getPlayerUI('computer'),
+  attempt:  document.getElementById('attempt'),
+  generate: document.getElementById('generate'),
+  restart:  document.getElementById('restart'),
+  result:   document.getElementById('result')
+};
 
-const WINNING_SCORE = 3;
-let userScore = 0;
-let computerScore = 0;
+const state = {
+  attempt: 0,
+  userScore: 0,
+  computerScore: 0,
+  userName: DEFAULT_NAME,
+  busy: false
+};
 
-const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const askUserName = () => {
 
-const handleStart = () => {
-    const userNum = random(1, 6);
-    const computerNum = random(1, 6);
+  let username = prompt("Введіть ваше ім'я:");
 
-    userNumField.textContent = userNum;
-    compNumField.textContent = computerNum;
+  if (username === null || username.trim() === "") {
+    username = prompt("Введіть коректне ім'я:")
+  }
 
-    if(userNum > computerNum) {
-        userScore++;
-        msgFIeld.textContent = `${resUsername} wins the round` ;
-    } else if (computerNum > userNum) {
-        computerScore++;
-        msgFIeld.textContent = 'Computer wins the round';
-    } else {
-        msgFIeld.textContent = 'Draw';
-    }
-
-    userScoreField.textContent = userScore;
-    compScoreField.textContent = computerScore;
-
-    if (userScore === WINNING_SCORE) {
-        msgFIeld.textContent = `${resUsername} wins the round` ;
-        startBtn.disabled = true;
-        resetBtn.hidden = false;
-    } else if(computerScore === WINNING_SCORE) {
-        msgFIeld.textContent = 'Computer wins the game';
-        startBtn.disabled = true;
-        resetBtn.hidden = false;
-    }
+  return username;
 }
 
-const handleReset = () => {
-    userScore = 0;
-    computerScore = 0;
-    userScoreField.textContent = 0;
-    compScoreField.textContent = 0;
-    userNumField.textContent = '?';
-    compNumField.textContent = '?';
-    msgFIeld.textContent = '';
-    startBtn.disabled = false;
-    resetBtn.hidden = true;
+const randomItem = (array) => {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
-startBtn.addEventListener('click', handleStart);
-resetBtn.addEventListener('click', handleReset);
+const setGenerateEnabled = (enabled) => {
+  ui.generate.disabled = !enabled;
+  ui.generate.style.opacity = enabled ? '1' : '0.5';
+  ui.generate.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+const showFace = (player, card, suit) => {
+  player.card.classList.remove('card--back');
+  player.card.style.color = suit.color; 
+
+  player.ranks.forEach((el) => { el.textContent = card.rank; });
+  player.miniSuits.forEach((el) => { el.textContent = suit.symbol; });
+  player.bigSuit.textContent = suit.symbol;
+
+  player.caption.textContent = card.title + ' (' + card.value + ')';
+}
+
+const hideFace = (player) => {
+  player.card.classList.add('card--back');
+  player.card.style.color = '';
+  player.card.style.transform = '';
+  player.caption.textContent = '\u00a0';
+}
+
+const onGenerate = () => {
+  if (state.busy || state.attempt >= TOTAL_ATTEMPTS) {
+    return;
+  }
+
+  state.busy = true;
+  setGenerateEnabled(false);
+
+  state.attempt++;
+  ui.attempt.textContent = 'Спроба ' + state.attempt + ' з ' + TOTAL_ATTEMPTS;
+
+  const userCard = randomItem(CARDS);
+  const computerCard = randomItem(CARDS);
+  const userSuit = randomItem(SUITS);
+  const computerSuit = randomItem(SUITS);
+
+  ui.user.card.style.transform = 'rotateY(90deg)';
+  ui.computer.card.style.transform = 'rotateY(90deg)';
+
+  setTimeout(() => {
+    showFace(ui.user, userCard, userSuit);
+    showFace(ui.computer, computerCard, computerSuit);
+
+    state.userScore += userCard.value;
+    state.computerScore += computerCard.value;
+    ui.user.score.textContent = state.userScore;
+    ui.computer.score.textContent = state.computerScore;
+
+    ui.user.card.style.transform = 'rotateY(0deg)';
+    ui.computer.card.style.transform = 'rotateY(0deg)';
+
+    setTimeout(() => {
+      state.busy = false;
+
+      if (state.attempt >= TOTAL_ATTEMPTS) {
+        finishGame();
+      } else {
+        setGenerateEnabled(true);
+      }
+    }, FLIP_TIME);
+  }, FLIP_TIME);
+}
+
+const highlight = (player, color, dim) => {
+  player.score.style.backgroundColor = color;
+  player.block.style.boxShadow = '0 0 0 4px ' + color;
+  player.block.style.opacity = dim ? '0.6' : '1';
+}
+
+const finishGame = () => {
+  let text;
+  let color;
+
+  const userScore = Math.abs(state.userScore - 21);
+  const compScore = Math.abs(state.computerScore - 21);
+
+  if (userScore < compScore) {
+    text = `Переміг ${state.userName}!`;
+    color = COLORS.win;
+    highlight(ui.user, COLORS.win, false);
+    highlight(ui.computer, COLORS.lose, true);
+  } else if (userScore > compScore) {
+    text = "Переміг комп'ютер";
+    color = COLORS.lose;
+    highlight(ui.user, COLORS.lose, true);
+    highlight(ui.computer, COLORS.win, false);
+  } else {
+    text = 'Нічия';
+    color = COLORS.draw;
+    highlight(ui.user, COLORS.draw, false);
+    highlight(ui.computer, COLORS.draw, false);
+  }
+
+  ui.result.textContent = text;
+  ui.result.style.color = color;
+  ui.result.style.display = 'block';
+  ui.restart.style.display = 'inline-block';
+}
+
+const resetGame = () => {
+  state.attempt = 0;
+  state.userScore = 0;
+  state.computerScore = 0;
+  state.busy = false;
+
+  [ui.user, ui.computer].forEach((player) => {
+    hideFace(player);
+    player.score.textContent = '0';
+    player.score.style.backgroundColor = COLORS.score;
+    player.block.style.boxShadow = 'none';
+    player.block.style.opacity = '1';
+  });
+
+  ui.attempt.textContent = 'Спроба 0 з ' + TOTAL_ATTEMPTS;
+  ui.result.style.display = 'none';
+  ui.restart.style.display = 'none';
+  setGenerateEnabled(true);
+}
+
+const init = () => {
+  state.userName = askUserName();
+  ui.user.name.textContent = state.userName;
+
+  ui.generate.addEventListener('click', onGenerate);
+  ui.restart.addEventListener('click', resetGame);
+  resetGame();
+}
+
+init();

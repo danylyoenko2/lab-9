@@ -1,0 +1,219 @@
+/* ---------- Базові стилі ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --blue: #00b0f0;
+  --green: #1fe01f;
+  --text: #111;
+  --card-width: clamp(96px, 26vw, 180px);
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background: #f4f6f8;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(12px, 3vw, 32px);
+}
+
+/* ---------- Сітка гри ---------- */
+.game {
+  width: 100%;
+  max-width: 820px;
+  display: grid;
+  grid-template-columns: 1fr minmax(150px, 1fr) 1fr;
+  grid-template-areas: "user center computer";
+  gap: clamp(8px, 2vw, 24px);
+  align-items: start;
+  background: #fff;
+  border-radius: 16px;
+  padding: clamp(12px, 3vw, 28px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Блок гравця ---------- */
+.player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  transition: box-shadow 0.3s, opacity 0.3s;
+  min-width: 0;
+}
+
+.player__name {
+  margin: 0;
+  max-width: 100%;
+  font-size: clamp(18px, 4vw, 28px);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.score {
+  width: 100%;
+  max-width: 150px;
+  padding: 8px 0;
+  text-align: center;
+  font-size: clamp(16px, 3.5vw, 22px);
+  font-weight: bold;
+  background-color: var(--blue);
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.caption {
+  margin: 0;
+  min-height: 1.3em;
+  font-size: clamp(12px, 2.6vw, 15px);
+  text-align: center;
+}
+
+/* ---------- Карта ---------- */
+.card {
+  position: relative;
+  width: var(--card-width);
+  aspect-ratio: 5 / 7;
+  background: #fff;
+  border: 2px solid #222;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s ease-in;
+  user-select: none;
+}
+
+.card__corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  font-weight: bold;
+  font-size: calc(var(--card-width) * 0.17);
+}
+
+.card__corner--top {
+  top: 6%;
+  left: 7%;
+}
+
+.card__corner--bottom {
+  bottom: 6%;
+  right: 7%;
+  transform: rotate(180deg);
+}
+
+.card__mini-suit {
+  font-size: 0.85em;
+}
+
+.card__suit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: calc(var(--card-width) * 0.55);
+  line-height: 1;
+}
+
+/* Сорочка карти */
+.card--back {
+  background:
+    repeating-linear-gradient(45deg, #1b4f9c 0 8px, #2a67c4 8px 16px);
+  border-color: #fff;
+  outline: 2px solid #1b4f9c;
+}
+
+.card--back > * {
+  visibility: hidden;
+}
+
+/* ---------- Центральна частина ---------- */
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding-top: 8px;
+  min-width: 0;
+}
+
+.attempt {
+  margin: 0;
+  font-style: italic;
+  font-size: clamp(15px, 3vw, 20px);
+  text-align: center;
+}
+
+.btn {
+  font-family: inherit;
+  font-weight: bold;
+  font-size: clamp(16px, 3.5vw, 22px);
+  padding: 14px 28px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text);
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn--generate {
+  width: 100%;
+  max-width: 220px;
+  background-color: var(--green);
+}
+
+.btn--restart {
+  display: none;
+  background-color: #ffd23f;
+}
+
+.result {
+  margin: 0;
+  display: none;
+  text-align: center;
+  font-size: clamp(18px, 4vw, 26px);
+  font-weight: bold;
+}
+
+/* ---------- Адаптивність ---------- */
+@media (max-width: 640px) {
+  .game {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "user computer"
+      "center center";
+  }
+
+  .center {
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .player {
+    padding: 8px 2px;
+  }
+
+  .btn {
+    padding: 12px 20px;
+  }
+}
