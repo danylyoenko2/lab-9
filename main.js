@@ -152,15 +152,12 @@ const finishGame = () => {
   let text;
   let color;
 
-  const userScore = Math.abs(state.userScore - 21);
-  const compScore = Math.abs(state.computerScore - 21);
-
-  if (userScore < compScore) {
+  if (state.userScore > state.computerScore) {
     text = `Переміг ${state.userName}!`;
     color = COLORS.win;
     highlight(ui.user, COLORS.win, false);
     highlight(ui.computer, COLORS.lose, true);
-  } else if (userScore > compScore) {
+  } else if (state.userScore < state.computerScore) {
     text = "Переміг комп'ютер";
     color = COLORS.lose;
     highlight(ui.user, COLORS.lose, true);
